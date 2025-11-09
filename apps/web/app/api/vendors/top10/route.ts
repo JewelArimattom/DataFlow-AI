@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Decimal } from '@prisma/client/runtime/library'
 
 export async function GET(request: Request) {
   try {
@@ -19,11 +20,11 @@ export async function GET(request: Request) {
 
     // Calculate total spend per vendor
     const vendorSpend = topVendors
-      .map((vendor) => ({
+      .map((vendor: { id: string; name: string; invoices: { total: Decimal }[] }) => ({
         id: vendor.id,
         name: vendor.name,
         totalSpend: vendor.invoices.reduce(
-          (sum, inv) => sum + Number(inv.total),
+          (sum: number, inv: { total: Decimal }) => sum + Number(inv.total),
           0
         ),
       }))
