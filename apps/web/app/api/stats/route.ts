@@ -1,7 +1,22 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Quick debug-only response: avoid DB access and only reveal whether DATABASE_URL exists.
+  // Use: /api/stats?debug=1
+  try {
+    const url = new URL(request.url)
+    if (url.searchParams.get('debug') === '1') {
+      return NextResponse.json({
+        debug: true,
+        databaseUrl: process.env.DATABASE_URL ? 'set' : 'MISSING',
+        nodeEnv: process.env.NODE_ENV,
+      })
+    }
+  } catch (e) {
+    // ignore URL parsing errors and continue to normal handler
+  }
+
   try {
     const currentYear = new Date().getFullYear()
     const yearStart = new Date(currentYear, 0, 1)
