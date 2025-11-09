@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Decimal } from '@prisma/client/runtime/library'
 
 export async function GET(request: Request) {
   try {
@@ -60,7 +61,19 @@ export async function GET(request: Request) {
     ])
 
     return NextResponse.json({
-      data: invoices.map((invoice) => ({
+      data: invoices.map((invoice: {
+        id: string
+        invoiceNumber: string
+        date: Date
+        dueDate: Date | null
+        amount: Decimal
+        tax?: Decimal | null
+        total: Decimal
+        status: string
+        vendor: { name: string }
+        customer?: { name?: string } | null
+        notes?: string | null
+      }) => ({
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         date: invoice.date.toISOString(),
