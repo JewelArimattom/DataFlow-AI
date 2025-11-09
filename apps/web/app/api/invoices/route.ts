@@ -95,10 +95,9 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Error fetching invoices:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch invoices' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch invoices' }
+    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 

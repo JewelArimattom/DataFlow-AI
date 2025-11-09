@@ -39,10 +39,9 @@ export async function GET() {
     return NextResponse.json(trends)
   } catch (error) {
     console.error('Error fetching invoice trends:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch invoice trends' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch invoice trends' }
+    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 

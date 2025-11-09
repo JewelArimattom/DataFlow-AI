@@ -81,10 +81,9 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching stats:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch stats' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch stats' }
+    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 

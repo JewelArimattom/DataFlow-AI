@@ -73,3 +73,4 @@ prisma/migrations/
 /services/vanna/Dockerfile
 /services/vanna/TROUBLESHOOTING.md
 /apps/web/.env.production
+/services/vanna/.env.production

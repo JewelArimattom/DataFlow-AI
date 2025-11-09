@@ -36,10 +36,9 @@ export async function GET() {
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching category spend:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch category spend' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch category spend' }
+    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 

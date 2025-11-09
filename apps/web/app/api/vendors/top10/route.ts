@@ -36,10 +36,9 @@ export async function GET(request: Request) {
     return NextResponse.json(vendorSpend)
   } catch (error) {
     console.error('Error fetching top vendors:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch top vendors' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch top vendors' }
+    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 
