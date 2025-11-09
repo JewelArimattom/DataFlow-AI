@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Decimal } from '@prisma/client/runtime/library'
 
+// This route reads request.url query params; force dynamic to avoid static render errors
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
