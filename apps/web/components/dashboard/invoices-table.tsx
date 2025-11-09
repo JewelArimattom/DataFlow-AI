@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Table,
   TableBody,
@@ -44,7 +44,7 @@ export function InvoicesTable() {
   const [sortBy, setSortBy] = useState('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const fetchInvoices = () => {
+  const fetchInvoices = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams({
       page: page.toString(),
@@ -67,15 +67,15 @@ export function InvoicesTable() {
         console.error('Error fetching invoices:', error)
         setLoading(false)
       })
-  }
+  }, [page, sortBy, sortOrder, search])
 
   useEffect(() => {
     fetchInvoices()
-  }, [page, sortBy, sortOrder])
+  }, [fetchInvoices])
 
   const handleSearch = () => {
+    // Reset to first page; effect will trigger fetchInvoices
     setPage(1)
-    fetchInvoices()
   }
 
   const handleSort = (column: string) => {
