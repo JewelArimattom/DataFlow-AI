@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Prisma } from '@prisma/client'
+import type { Decimal } from '@prisma/client/runtime/library'
 
 export async function GET() {
   try {
@@ -19,7 +19,7 @@ export async function GET() {
     // Group by category
     const categorySpend = new Map<string, number>()
 
-    lineItems.forEach((item: { category: string | null; amount: Prisma.Decimal }) => {
+    lineItems.forEach((item: { category: string | null; amount: Decimal }) => {
       const category = item.category || 'Uncategorized'
       const existing = categorySpend.get(category) || 0
       categorySpend.set(category, existing + Number(item.amount))
