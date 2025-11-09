@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -17,7 +18,7 @@ export async function GET() {
     // Group by month
     const monthlyData = new Map<string, { count: number; total: number }>()
 
-    invoices.forEach((invoice) => {
+    invoices.forEach((invoice: { date: Date; total: Prisma.Decimal }) => {
       const monthKey = invoice.date.toISOString().substring(0, 7) // YYYY-MM
       const existing = monthlyData.get(monthKey) || { count: 0, total: 0 }
       monthlyData.set(monthKey, {

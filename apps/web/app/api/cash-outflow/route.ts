@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export async function GET(request: Request) {
   try {
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
       '60+ days': 0,
     }
 
-    invoices.forEach((invoice) => {
+    invoices.forEach((invoice: { dueDate: Date | null; total: Prisma.Decimal }) => {
       const total = Number(invoice.total)
       
       if (!invoice.dueDate) {
