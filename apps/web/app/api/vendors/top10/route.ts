@@ -19,8 +19,10 @@ export async function GET(request: Request) {
     })
 
     // Calculate total spend per vendor
-    const vendorSpend = topVendors
-      .map((vendor: { id: string; name: string; invoices: { total: Decimal }[] }) => ({
+    type VendorSpend = { id: string; name: string; totalSpend: number }
+
+    const vendorSpend: VendorSpend[] = topVendors
+      .map((vendor: { id: string; name: string; invoices: { total: Decimal }[] }): VendorSpend => ({
         id: vendor.id,
         name: vendor.name,
         totalSpend: vendor.invoices.reduce(
@@ -28,7 +30,7 @@ export async function GET(request: Request) {
           0
         ),
       }))
-      .sort((a, b) => b.totalSpend - a.totalSpend)
+      .sort((a: VendorSpend, b: VendorSpend) => b.totalSpend - a.totalSpend)
       .slice(0, limit)
 
     return NextResponse.json(vendorSpend)
