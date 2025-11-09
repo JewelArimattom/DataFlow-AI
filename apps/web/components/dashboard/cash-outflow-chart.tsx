@@ -29,12 +29,18 @@ export function CashOutflowChart() {
   useEffect(() => {
     fetch('/api/cash-outflow')
       .then((res) => res.json())
-      .then((data) => {
-        setData(data)
+      .then((response) => {
+        if (Array.isArray(response)) {
+          setData(response)
+        } else {
+          console.error('Cash outflow API returned unexpected format:', response)
+          setData([])
+        }
         setLoading(false)
       })
       .catch((error) => {
         console.error('Error fetching cash outflow:', error)
+        setData([])
         setLoading(false)
       })
   }, [])
