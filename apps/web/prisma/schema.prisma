@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Vendor {
+  id          String    @id @default(uuid())
+  name        String
+  category    String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  invoices    Invoice[]
+
+  @@index([name])
+  @@map("vendors")
+}
+
+model Customer {
+  id          String    @id @default(uuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  invoices    Invoice[]
+
+  @@index([name])
+  @@map("customers")
+}
+
+model Invoice {
+  id              String      @id @default(uuid())
+  invoiceNumber   String      @unique
+  date            DateTime
+  dueDate         DateTime?
+  amount          Decimal     @db.Decimal(10, 2)
+  tax             Decimal?    @db.Decimal(10, 2)
+  total           Decimal     @db.Decimal(10, 2)
+  status          String      // paid, pending, overdue
+  vendorId        String
+  customerId      String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  vendor          Vendor      @relation(fields: [vendorId], references: [id])
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  lineItems       LineItem[]
+  payments        Payment[]
+
+  @@index([invoiceNumber])
+  @@index([date])
+  @@index([status])
+  @@index([vendorId])
+  @@map("invoices")
+}
+
+model LineItem {
+  id          String    @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Decimal   @db.Decimal(10, 2)
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  amount      Decimal   @db.Decimal(10, 2)
+  category    String?
+  createdAt   DateTime  @default(now())
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([category])
+  @@map("line_items")
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  invoiceId   String
+  amount      Decimal   @db.Decimal(10, 2)
+  paymentDate DateTime
+  method      String?   // cash, card, bank_transfer, etc.
+  reference   String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([paymentDate])
+  @@map("payments")
+}
+

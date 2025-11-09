@@ -1,0 +1,6 @@
+services/
+data/
+packages/
+*.md
+!.vercel/README.md
+

@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Database
+*.db
+*.sqlite
+
+# Turbo
+.turbo/
+
+# Prisma
+prisma/migrations/
+
+/plan.plan.md
+/apps/web/.env
+/HOW_TO_USE.md
+/COMING_SOON_COMPONENTS.md
+/DEPLOYMENT.md
+/API.md
+/services/vanna/.env
+/node_modules
+/services/vanna/Dockerfile
+/services/vanna/TROUBLESHOOTING.md
