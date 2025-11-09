@@ -173,7 +173,7 @@ async function main() {
           })
           vendorId = vendor.id
         }
-        vendorMap.set(vendorName, vendorId)
+        vendorMap.set(vendorName, vendorId!)
       }
 
       // Handle customer (if exists) - extract from nested structure
@@ -205,7 +205,7 @@ async function main() {
             })
             customerId = customer.id
           }
-          customerMap.set(customerName, customerId)
+          customerMap.set(customerName, customerId!)
         }
       }
 
