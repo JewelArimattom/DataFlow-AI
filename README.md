@@ -496,11 +496,3 @@ npx prisma db seed
 - Reinstall dependencies: `rm -rf node_modules && npm install`
 - Check Node.js version (requires 18+)
 
-## License
-
-This project is part of a technical assessment for Flowbit Private Limited.
-
-## Contact
-
-For questions or issues, please contact: recruit@flowbitai.com
-
