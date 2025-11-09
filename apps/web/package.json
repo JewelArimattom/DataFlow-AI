@@ -7,13 +7,14 @@
   },
   "scripts": {
     "dev": "next dev",
-  "build": "cross-env NEXT_TELEMETRY_DISABLED=1 next build",
+    "build": "cross-env NEXT_TELEMETRY_DISABLED=1 next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts"
   },
+  "postinstall": "prisma generate",
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "class-variance-authority": "^0.7.0",
