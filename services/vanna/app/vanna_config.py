@@ -152,9 +152,13 @@ def get_vanna_instance():
     if not database_url:
         raise ValueError("DATABASE_URL environment variable is required. Please set it in your .env file.")
     
-    # Convert mysql:// to mysql+pymysql:// for SQLAlchemy if needed
+    # Convert mysql:// to mysql+pymysql:// or postgresql:// to postgresql+psycopg:// for SQLAlchemy if needed
     if database_url.startswith("mysql://"):
         database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
+    elif database_url.startswith("postgresql://") and "+psycopg" not in database_url:
+        # PostgreSQL driver is usually handled automatically by SQLAlchemy, but we can be explicit
+        # If you have psycopg2 installed, SQLAlchemy will use it by default
+        pass  # Keep as-is; SQLAlchemy will pick the correct driver
     
     print(f"Initializing self-hosted Vanna AI with Groq...")
     print(f"Database URL: {database_url[:30]}...")  # Don't print full URL for security
