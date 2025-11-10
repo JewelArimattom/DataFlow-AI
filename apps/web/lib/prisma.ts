@@ -11,7 +11,27 @@ if (!process.env.DATABASE_URL) {
   console.warn('Warning: DATABASE_URL is not set. Prisma queries will fail until DATABASE_URL is configured.')
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+// For serverless deployments (Vercel), ensure Prisma connects via PgBouncer Transaction pooler
+// to avoid exhausting database connections. We append recommended parameters when using Postgres.
+function withPgBouncerParams(url: string | undefined) {
+  if (!url) return url
+  if (!url.startsWith('postgresql')) return url
+
+  // Append query params safely
+  const hasQuery = url.includes('?')
+  const suffix = 'pgbouncer=true&connection_limit=1'
+  return url + (hasQuery ? '&' : '?') + suffix
+}
+
+const datasourceUrl = withPgBouncerParams(process.env.DATABASE_URL)
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient(
+    datasourceUrl
+      ? { datasources: { db: { url: datasourceUrl } } }
+      : undefined
+  )
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
