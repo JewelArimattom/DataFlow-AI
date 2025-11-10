@@ -41,13 +41,39 @@ function withPgBouncerParams(url: string | undefined) {
 
 const datasourceUrl = withPgBouncerParams(process.env.DATABASE_URL)
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient(
-    datasourceUrl
-      ? { datasources: { db: { url: datasourceUrl } } }
-      : undefined
-  )
+// Optional one-time logging & early connectivity probe for diagnostics.
+if (process.env.DEBUG_PRISMA_INIT === '1') {
+  // eslint-disable-next-line no-console
+  console.log('[prisma:init] datasourceUrl:', datasourceUrl)
+}
+
+let prismaClient: PrismaClient
+if (globalForPrisma.prisma) {
+  prismaClient = globalForPrisma.prisma
+} else {
+  try {
+    prismaClient = new PrismaClient(
+      datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : undefined
+    )
+    // Optional lightweight probe when verbose debug enabled
+    if (process.env.DEBUG_PRISMA_INIT === '1') {
+      prismaClient.$queryRaw`SELECT 1`.then(() => {
+        // eslint-disable-next-line no-console
+        console.log('[prisma:init] connectivity probe succeeded')
+      }).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error('[prisma:init] connectivity probe failed', e)
+      })
+    }
+    if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaClient
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[prisma:init] failed to create client', e)
+    throw e
+  }
+}
+
+export const prisma = prismaClient
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
