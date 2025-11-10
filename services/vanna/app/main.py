@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+import socket
+import time
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from app.vanna_config import get_vanna_instance
 
@@ -40,6 +43,53 @@ class QueryResponse(BaseModel):
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.get("/diag-db")
+async def diag_db():
+    """Diagnostic endpoint: attempt a TCP connect to the configured DATABASE_URL host:port
+
+    Useful for deploying to Render and confirming whether the host can reach the DB.
+    Returns JSON with ok:true on success and ok:false with error on failure.
+    """
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        return {"ok": False, "error": "DATABASE_URL not set in environment"}
+
+    # Accept mysql:// or mysql+pymysql:// formats
+    try:
+        # Strip SQLAlchemy prefix if present
+        normalized = db_url
+        if normalized.startswith("mysql+pymysql://"):
+            normalized = normalized.replace("mysql+pymysql://", "mysql://", 1)
+
+        parsed = urlparse(normalized)
+        host = parsed.hostname or ""
+        port = parsed.port or 3306
+    except Exception as e:
+        return {"ok": False, "error": f"Failed to parse DATABASE_URL: {e}", "raw": db_url}
+
+    try:
+        start = time.time()
+        s = socket.create_connection((host, port), timeout=6)
+        # Try to read a small greeting (MySQL server handshake) if any
+        greeting = None
+        try:
+            s.settimeout(2.0)
+            data = s.recv(512)
+            if data:
+                try:
+                    greeting = data.decode('utf-8', errors='replace')
+                except Exception:
+                    greeting = str(data[:200])
+        except Exception:
+            # ignore read errors
+            greeting = None
+        s.close()
+        latency_ms = int((time.time() - start) * 1000)
+        return {"ok": True, "host": host, "port": port, "latency_ms": latency_ms, "greeting": greeting[:200] if greeting else None}
+    except Exception as e:
+        return {"ok": False, "host": host, "port": port, "error": str(e)}
 
 
 @app.post("/query", response_model=QueryResponse)

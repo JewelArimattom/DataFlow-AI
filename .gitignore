@@ -74,3 +74,6 @@ prisma/migrations/
 /services/vanna/TROUBLESHOOTING.md
 /apps/web/.env.production
 /services/vanna/.env.production
+/.tmp_check_mysql_tcp.py
+/.tmp_check_mysql_auth.py
+/.tmp_list_tables.py
