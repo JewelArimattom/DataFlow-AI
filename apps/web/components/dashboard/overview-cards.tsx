@@ -86,13 +86,12 @@ export function OverviewCards() {
       return
     }
 
-    // No cache - fetch with timeout
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
-
-    fetch('/api/stats', { signal: controller.signal, cache: 'no-store' })
+    // No cache - fetch without timeout (let browser handle it)
+    fetch('/api/stats', { cache: 'no-store' })
       .then((res) => {
-        clearTimeout(timeoutId)
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`)
+        }
         return res.json()
       })
       .then((data) => {
@@ -102,8 +101,10 @@ export function OverviewCards() {
         setLoading(false)
       })
       .catch((error) => {
-        clearTimeout(timeoutId)
-        console.error('Error fetching stats:', error)
+        // Only log non-abort errors
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching stats:', error)
+        }
         setLoading(false)
       })
   }, [])
