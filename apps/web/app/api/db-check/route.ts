@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 // Returns minimal, non-sensitive info. Use for production diagnostics.
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
   const checks: Record<string, any> = {
     timestamp: new Date().toISOString(),
     databaseUrl: process.env.DATABASE_URL ? 'set' : 'MISSING',
@@ -24,7 +24,14 @@ export async function GET() {
     return NextResponse.json({ status: 'ok', checks })
   } catch (error: any) {
     const payload: any = { status: 'error', message: 'Prisma connectivity failed', checks }
-    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1') {
+    // allow ad-hoc verbose via query param: /api/db-check?verbose=1
+    let verbose = process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1'
+    try {
+      const url = new URL(request.url)
+      if (url.searchParams.get('verbose') === '1') verbose = true
+    } catch {}
+
+    if (verbose) {
       payload.error = {
         name: error?.name,
         message: String(error?.message ?? error),
