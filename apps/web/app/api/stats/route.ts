@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Stats API endpoint - returns dashboard statistics
 export async function GET(request: Request) {
   // Quick debug-only response: avoid DB access and only reveal whether DATABASE_URL exists.
   // Use: /api/stats?debug=1
