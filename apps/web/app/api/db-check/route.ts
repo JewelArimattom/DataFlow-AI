@@ -1,53 +1,38 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Production-safe DB connectivity check (no underscore path to avoid filtering)
+// Public (non-underscore) health check for Prisma connectivity
+// Returns minimal, non-sensitive info. Use for production diagnostics.
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const checks: any = {
+  const checks: Record<string, any> = {
     timestamp: new Date().toISOString(),
     databaseUrl: process.env.DATABASE_URL ? 'set' : 'MISSING',
     nodeEnv: process.env.NODE_ENV,
   }
 
   try {
-    // Test 1: Prisma client loaded
-    checks.prismaClientLoaded = 'yes'
+    // Basic connectivity: raw query
+    const result = await prisma.$queryRaw`SELECT 1 as ok`
+    checks.raw = result
 
-    // Test 2: Raw query
-    const result = await prisma.$queryRaw`SELECT 1 as test`
-    checks.rawQuerySuccess = 'yes'
-    checks.rawQueryResult = result
+    // Simple table check (optional table may be empty)
+    const invoiceCount = await prisma.invoice.count().catch(() => null)
+    checks.invoiceCount = invoiceCount
 
-    // Test 3: Table count
-    const count = await prisma.invoice.count()
-    checks.invoiceCount = count
-    checks.tableQuerySuccess = 'yes'
-
-    return NextResponse.json({
-      status: 'success',
-      message: 'Database connection verified',
-      checks,
-    })
+    return NextResponse.json({ status: 'ok', checks })
   } catch (error: any) {
-    checks.error = {
-      name: error.name,
-      message: error.message,
-      code: error.code,
-      stack:
-        process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1'
-          ? error.stack
-          : undefined,
+    const payload: any = { status: 'error', message: 'Prisma connectivity failed', checks }
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1') {
+      payload.error = {
+        name: error?.name,
+        message: String(error?.message ?? error),
+        code: error?.code,
+        stack: error?.stack,
+      }
     }
-
-    return NextResponse.json(
-      {
-        status: 'error',
-        message: 'Database connection failed',
-        checks,
-      },
-      { status: 500 }
-    )
+    return NextResponse.json(payload, { status: 500 })
   }
 }
+ 
