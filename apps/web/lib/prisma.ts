@@ -17,10 +17,26 @@ function withPgBouncerParams(url: string | undefined) {
   if (!url) return url
   if (!url.startsWith('postgresql')) return url
 
-  // Append query params safely
-  const hasQuery = url.includes('?')
-  const suffix = 'pgbouncer=true&connection_limit=1'
-  return url + (hasQuery ? '&' : '?') + suffix
+  // Use URL parsing to manipulate query params safely
+  try {
+    const u = new URL(url)
+    const params = u.searchParams
+
+    // Ensure SSL for Supabase
+    if (!params.has('sslmode')) params.set('sslmode', 'require')
+
+    // Hint Prisma to work well with PgBouncer + avoid many connections in serverless
+    if (!params.has('pgbouncer')) params.set('pgbouncer', 'true')
+    if (!params.has('connection_limit')) params.set('connection_limit', '1')
+
+    u.search = params.toString()
+    return u.toString()
+  } catch {
+    // Fallback to string append
+    const hasQuery = url.includes('?')
+    const suffix = 'sslmode=require&pgbouncer=true&connection_limit=1'
+    return url + (hasQuery ? '&' : '?') + suffix
+  }
 }
 
 const datasourceUrl = withPgBouncerParams(process.env.DATABASE_URL)
