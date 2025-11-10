@@ -93,6 +93,24 @@ SQL Query:"""
         `keep_columns` list to return only certain columns.
         """
         try:
+            # If using PostgreSQL, translate a few common MySQL-specific functions
+            # returned by the SQL generator into Postgres equivalents so execution succeeds.
+            # This is a best-effort, minimal translator for common constructs like
+            # MONTH(), YEAR(), CURDATE(), IFNULL(), and backticks.
+            if self.database_url.startswith("postgresql"):
+                orig_sql = sql
+                # Replace MONTH(col) and YEAR(col) with EXTRACT
+                sql = re.sub(r"\bMONTH\(\s*([^\)]+)\s*\)", r"EXTRACT(MONTH FROM \1)", sql, flags=re.I)
+                sql = re.sub(r"\bYEAR\(\s*([^\)]+)\s*\)", r"EXTRACT(YEAR FROM \1)", sql, flags=re.I)
+                # CURDATE() -> CURRENT_DATE, NOW() -> CURRENT_TIMESTAMP
+                sql = re.sub(r"\bCURDATE\s*\(\s*\)", "CURRENT_DATE", sql, flags=re.I)
+                sql = re.sub(r"\bNOW\s*\(\s*\)", "CURRENT_TIMESTAMP", sql, flags=re.I)
+                # IFNULL(a,b) -> COALESCE(a,b)
+                sql = re.sub(r"\bIFNULL\s*\(", "COALESCE(", sql, flags=re.I)
+                # Remove MySQL-style backticks
+                sql = sql.replace('`', '')
+                if sql != orig_sql:
+                    print("Translated SQL for Postgres:\n", sql)
             with self.engine.connect() as conn:
                 result = conn.execute(text(sql))
                 rows = result.fetchall()

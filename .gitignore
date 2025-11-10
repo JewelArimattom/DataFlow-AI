@@ -77,3 +77,4 @@ prisma/migrations/
 /.tmp_check_mysql_tcp.py
 /.tmp_check_mysql_auth.py
 /.tmp_list_tables.py
+/services/vanna/scripts
