@@ -21,6 +21,16 @@ A production-grade full-stack web application with an Interactive Analytics Dash
     └── Analytics_Test_Data.json
 ```
 
+## Features
+
+- 📊 **Interactive Analytics Dashboard** - Real-time visualizations of invoice data, vendor spend, and cash flow forecasts
+- 💬 **Chat with Data** - Natural language queries powered by Vanna AI to explore your data
+- 📝 **Persistent Chat History** - All chat conversations are saved and can be retrieved anytime
+- 📤 **CSV / Excel Export** - Export invoice data and reports to CSV or Excel formats
+- 🔍 **Advanced Filtering & Search** - Multi-criteria filtering across invoices, vendors, and dates
+- 📈 **Dynamic Charts** - Interactive charts with sparklines, trends, and comparisons
+- 🌐 **Responsive Design** - Optimized for desktop, tablet, and mobile devices
+
 ## Tech Stack
 
 ### Frontend
