@@ -83,9 +83,33 @@ export default function ChatWithDataPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Error from backend - display it as an assistant error message
         const errorMsg = data.error || 'Failed to process query'
-        const details = data.details ? `\n\nDetails: ${data.details}` : ''
-        throw new Error(`${errorMsg}${details}`)
+        const errorDetails = data.details || ''
+        
+        // Create a friendly error message
+        let friendlyError = errorMsg
+        
+        // If it's a Vanna service error, extract the friendly part
+        if (errorMsg.includes('Vanna AI service error:')) {
+          friendlyError = errorMsg.replace('Vanna AI service error:', '').trim()
+        }
+        
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `❌ **Oops!** ${friendlyError}${errorDetails ? `\n\n💡 **Tip:** ${errorDetails}` : ''}`,
+          id: `a-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+          createdAt: new Date().toISOString(),
+          suggestions: [
+            'Show me total spend this year',
+            'List all tables available',
+            'Show recent invoices',
+          ],
+        }
+        
+        setMessages((prev) => [...prev, errorMessage])
+        setLoading(false)
+        return
       }
 
       // Build a richer assistant message: prefer backend `message` when available
