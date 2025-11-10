@@ -96,9 +96,20 @@ export async function GET(request: Request) {
       averageInvoiceValueHistory,
     })
   } catch (error) {
+    // Enhanced temporary diagnostics
     console.error('Error fetching stats:', error)
     const payload: any = { error: 'Failed to fetch stats' }
-    if (process.env.NODE_ENV !== 'production') payload.details = String(error)
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1') {
+      payload.details = String(error)
+      if (error && typeof error === 'object') {
+        // @ts-ignore
+        payload.name = error.name
+        // @ts-ignore
+        payload.code = error.code
+        // @ts-ignore
+        payload.stack = error.stack
+      }
+    }
     return NextResponse.json(payload, { status: 500 })
   }
 }

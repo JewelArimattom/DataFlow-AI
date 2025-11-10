@@ -75,10 +75,19 @@ export async function GET(request: Request) {
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching cash outflow:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch cash outflow' },
-      { status: 500 }
-    )
+    const payload: any = { error: 'Failed to fetch cash outflow' }
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_VERBOSE_ERRORS === '1') {
+      payload.details = String(error)
+      if (error && typeof error === 'object') {
+        // @ts-ignore
+        payload.name = error.name
+        // @ts-ignore
+        payload.code = error.code
+        // @ts-ignore
+        payload.stack = error.stack
+      }
+    }
+    return NextResponse.json(payload, { status: 500 })
   }
 }
 
