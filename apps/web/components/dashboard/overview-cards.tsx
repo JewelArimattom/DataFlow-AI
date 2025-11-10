@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
@@ -18,32 +18,91 @@ interface Stats {
   averageInvoiceValueHistory?: number[]
 }
 
+// Client-side cache for stats (30 seconds TTL)
+const CACHE_KEY = 'flowbit:stats:cache'
+const CACHE_TTL = 30000 // 30 seconds
+
+function getCachedStats(): { data: Stats; timestamp: number } | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY)
+    if (!cached) return null
+    const parsed = JSON.parse(cached)
+    if (!parsed.data || !parsed.timestamp) return null
+    if (Date.now() - parsed.timestamp > CACHE_TTL) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function setCachedStats(data: Stats) {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function OverviewCards() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/stats')
-      .then((res) => res.json())
+    // Helper to normalize data and add history
+    const generateMockHistory = (final: number, points = 6) => {
+      const base = final / points
+      return Array.from({ length: points }).map((_, i) => {
+        const factor = 0.6 + (i / (points - 1)) * 0.4
+        return Number((base * factor).toFixed(2))
+      })
+    }
+
+    const normalizeData = (data: any): Stats => {
+      if (!data.totalSpendHistory) data.totalSpendHistory = generateMockHistory(Number(data.totalSpend ?? 0))
+      if (!data.totalInvoicesHistory) data.totalInvoicesHistory = generateMockHistory(Number(data.totalInvoices ?? 0)).map((v) => Math.round(v))
+      if (!data.documentsUploadedHistory) data.documentsUploadedHistory = generateMockHistory(Number(data.documentsUploaded ?? 0)).map((v) => Math.round(v))
+      if (!data.averageInvoiceValueHistory) data.averageInvoiceValueHistory = generateMockHistory(Number(data.averageInvoiceValue ?? 0))
+      return data as Stats
+    }
+
+    // Check cache first
+    const cached = getCachedStats()
+    if (cached) {
+      setStats(cached.data)
+      setLoading(false)
+      // Background refresh for fresh data
+      fetch('/api/stats', { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          const normalized = normalizeData(data)
+          setCachedStats(normalized)
+          setStats(normalized)
+        })
+        .catch(() => {
+          // Silently fail background refresh
+        })
+      return
+    }
+
+    // No cache - fetch with timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    fetch('/api/stats', { signal: controller.signal, cache: 'no-store' })
+      .then((res) => {
+        clearTimeout(timeoutId)
+        return res.json()
+      })
       .then((data) => {
-        // If API doesn't provide history, generate a small deterministic fallback
-        const generateMockHistory = (final: number, points = 6) => {
-          const base = final / points
-          return Array.from({ length: points }).map((_, i) => {
-            const factor = 0.6 + (i / (points - 1)) * 0.4 // 0.6 -> 1.0 trend
-            return Number((base * factor).toFixed(2))
-          })
-        }
-
-        if (!data.totalSpendHistory) data.totalSpendHistory = generateMockHistory(Number(data.totalSpend ?? 0))
-        if (!data.totalInvoicesHistory) data.totalInvoicesHistory = generateMockHistory(Number(data.totalInvoices ?? 0)).map((v) => Math.round(v))
-        if (!data.documentsUploadedHistory) data.documentsUploadedHistory = generateMockHistory(Number(data.documentsUploaded ?? 0)).map((v) => Math.round(v))
-        if (!data.averageInvoiceValueHistory) data.averageInvoiceValueHistory = generateMockHistory(Number(data.averageInvoiceValue ?? 0))
-
-        setStats(data)
+        const normalized = normalizeData(data)
+        setCachedStats(normalized)
+        setStats(normalized)
         setLoading(false)
       })
       .catch((error) => {
+        clearTimeout(timeoutId)
         console.error('Error fetching stats:', error)
         setLoading(false)
       })
